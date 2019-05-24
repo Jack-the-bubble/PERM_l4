@@ -56,7 +56,7 @@ max_diameter = max(diameter);
 % maksymalny promień
 max_radius = max_diameter/2;
 % promien najwiekszego okregu w mm
-real_max_radius = 87/2;
+real_max_radius = 78/2;
 % ile mm ma jeden pixel
 px2mm = real_max_radius/max_radius;;
 % srodek najwiekszego okregu
