@@ -163,18 +163,18 @@ px2mm = real_max_radius/max_radius;;
 % srodek najwiekszego okregu
 center = [circ_x(id_max_circ) circ_y(id_max_circ)];
 
-% figure(1)
-% % imshow(afterOpening);
-% hold on;
-% for i=1:1:length(circ_areas)
-%    scatter(circ_x(i),circ_y(i),'filled');
-%    viscircles([circ_x(i) circ_y(i)],radiuses(i));
-%    radius = round(radiuses(i)*px2mm);
-%    txt = sprintf('R = %g mm',radius);
-%    text(circ_x(i),circ_y(i),txt,'Color','green','FontSize',10)
-% end
-% hold off;
-% hold on;
+figure(1)
+imshow(afterOpening);
+hold on;
+for i=1:1:length(circ_areas)
+   scatter(circ_x(i),circ_y(i),'filled');
+   viscircles([circ_x(i) circ_y(i)],radiuses(i));
+   radius = round(radiuses(i)*px2mm);
+   txt = sprintf('R = %g mm',radius);
+   text(circ_x(i),circ_y(i),txt,'Color','green','FontSize',10)
+end
+hold off;
+hold on;
 %--------------------------------------------------------
 
 
@@ -194,7 +194,7 @@ end
 % imshow(BW_out)
 
 % wyodrebnienie obiektu z obrazu
-pen = 5
+pen = 6
 box = pens_boxes(pen, :);
 im_x = box(1);
 im_y = box(2);
@@ -206,22 +206,29 @@ BW_help = BW_out(im_y:im_y+im_wid, im_x:im_x+im_len);
 deg = -pens_orientations(pen);
 
 
-
+figure(2)
 
 image_rot = imrotate(BW_help, deg, 'bicubic')
 
-image_rot_d = double(image_rot)
-imshow(image_rot_d)
+% image_rot_d = double(image_rot)
+% imshow(image_rot_d)
 
 % wytnij koncowki w zaleznosci od zadanych procentow
-siz = 0.3
+siz = 0.05
 im_proc = siz*size(image_rot, 1)
-image_rot = [image_rot(:, 1:im_proc) image_rot(:, end-im_proc:end)];
-probes = sum(image_rot)
+image_rot_cut = [image_rot(:, 1:im_proc) image_rot(:, end-im_proc:end)];
+probes = sum(image_rot_cut)
 S = skewness(probes)
 
 
 % pokaż obrocony obraz
+if S > 0
+    txt = sprintf('po prawej');
+else
+    txt = sprintf('po lewej');
+end
+
 image_rot_d = double(image_rot)
 % image_rot_d = imgaussfilt(image_rot_d)
 imshow(image_rot_d)
+text(5,5,txt,'Color','green','FontSize',10)
