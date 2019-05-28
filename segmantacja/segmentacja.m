@@ -108,13 +108,6 @@ afterOpening = imopen(afterClosing,s_opening);
 %imwrite(afterOpening,'myGrayMask.png');
 [BW_out,properties] = filterRegions(afterOpening);
 
-
-
-
-
-
-
-
 circ_x = [];
 circ_y = [];
 circ_areas = [];
@@ -129,19 +122,21 @@ pens_minor_axis = [];
 
 % nieefektywne filtrowanie okregow
 for i=1:1:length(properties)
-    ratio = properties(i).Area/(properties(i).Perimeter)^2;
-    if  ratio > 0.1/4*3.14
-        minor_axis = [minor_axis; properties(i).MinorAxisLength];
-        major_axis = [major_axis; properties(i).MajorAxisLength];
-        circ_areas = [circ_areas; properties(i).Area]
-        circ_x = [circ_x; properties(i).Centroid(1)];
-        circ_y = [circ_y; properties(i).Centroid(2)];
-    else
-        pens_centroids = [pens_centroids; properties(i).Centroid];
-        pens_boxes=[pens_boxes; properties(i).BoundingBox];
-        pens_minor_axis = [pens_minor_axis; properties(i).MinorAxisLength];
-        pens_major_axis = [pens_major_axis; properties(i).MajorAxisLength];
-        pens_orientations = [pens_orientations; properties(i).Orientation];
+    if properties(i).Area > 40
+        ratio = properties(i).Area/(properties(i).Perimeter)^2;
+        if  ratio > 0.1/4*3.14
+            minor_axis = [minor_axis; properties(i).MinorAxisLength];
+            major_axis = [major_axis; properties(i).MajorAxisLength];
+            circ_areas = [circ_areas; properties(i).Area]
+            circ_x = [circ_x; properties(i).Centroid(1)];
+            circ_y = [circ_y; properties(i).Centroid(2)];
+        else
+            pens_centroids = [pens_centroids; properties(i).Centroid];
+            pens_boxes=[pens_boxes; properties(i).BoundingBox];
+            pens_minor_axis = [pens_minor_axis; properties(i).MinorAxisLength];
+            pens_major_axis = [pens_major_axis; properties(i).MajorAxisLength];
+            pens_orientations = [pens_orientations; properties(i).Orientation];
+        end
     end
 end
 
@@ -163,18 +158,18 @@ px2mm = real_max_radius/max_radius;;
 % srodek najwiekszego okregu
 center = [circ_x(id_max_circ) circ_y(id_max_circ)];
 
-% figure(1)
-% % imshow(afterOpening);
-% hold on;
-% for i=1:1:length(circ_areas)
-%    scatter(circ_x(i),circ_y(i),'filled');
-%    viscircles([circ_x(i) circ_y(i)],radiuses(i));
-%    radius = round(radiuses(i)*px2mm);
-%    txt = sprintf('R = %g mm',radius);
-%    text(circ_x(i),circ_y(i),txt,'Color','green','FontSize',10)
-% end
-% hold off;
-% hold on;
+figure(1)
+imshow(afterOpening);
+hold on;
+for i=1:1:length(circ_areas)
+   scatter(circ_x(i),circ_y(i),'filled');
+   viscircles([circ_x(i) circ_y(i)],radiuses(i));
+   radius = round(radiuses(i)*px2mm);
+   txt = sprintf('R = %g mm',radius);
+   text(circ_x(i),circ_y(i),txt,'Color','green','FontSize',10)
+end
+hold off;
+hold on;
 %--------------------------------------------------------
 
 
@@ -194,34 +189,34 @@ end
 % imshow(BW_out)
 
 % wyodrebnienie obiektu z obrazu
-pen = 5
-box = pens_boxes(pen, :);
-im_x = box(1);
-im_y = box(2);
-im_len = box(3);
-im_wid = box(4);
-BW_help = BW_out(im_y:im_y+im_wid, im_x:im_x+im_len);
-% imshow(BW_help)
-% obroc go, zeby byl rownolegle do osi X
-deg = -pens_orientations(pen);
-
-
-
-
-image_rot = imrotate(BW_help, deg, 'bicubic')
-
-image_rot_d = double(image_rot)
-imshow(image_rot_d)
-
-% wytnij koncowki w zaleznosci od zadanych procentow
-siz = 0.3
-im_proc = siz*size(image_rot, 1)
-image_rot = [image_rot(:, 1:im_proc) image_rot(:, end-im_proc:end)];
-probes = sum(image_rot)
-S = skewness(probes)
-
-
-% pokaż obrocony obraz
-image_rot_d = double(image_rot)
-% image_rot_d = imgaussfilt(image_rot_d)
-imshow(image_rot_d)
+% pen = 5
+% box = pens_boxes(pen, :);
+% im_x = box(1);
+% im_y = box(2);
+% im_len = box(3);
+% im_wid = box(4);
+% BW_help = BW_out(im_y:im_y+im_wid, im_x:im_x+im_len);
+% % imshow(BW_help)
+% % obroc go, zeby byl rownolegle do osi X
+% deg = -pens_orientations(pen);
+% 
+% 
+% 
+% 
+% image_rot = imrotate(BW_help, deg, 'bicubic')
+% 
+% image_rot_d = double(image_rot)
+% imshow(image_rot_d)
+% 
+% % wytnij koncowki w zaleznosci od zadanych procentow
+% siz = 0.3
+% im_proc = siz*size(image_rot, 1)
+% image_rot = [image_rot(:, 1:im_proc) image_rot(:, end-im_proc:end)];
+% probes = sum(image_rot)
+% S = skewness(probes)
+% 
+% 
+% % pokaż obrocony obraz
+% image_rot_d = double(image_rot)
+% % image_rot_d = imgaussfilt(image_rot_d)
+% imshow(image_rot_d)
