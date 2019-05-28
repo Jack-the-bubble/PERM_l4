@@ -83,7 +83,7 @@ for i=1:1:length(pens_centroids)
    pen_minor_axe = round(pens_minor_axis(i)*px2mm);
    pen_major_axe = round(pens_major_axis(i)*px2mm);
    pen_orientation = round(pens_orientations(i),2);
-   txt = sprintf('width: %g mm \n length: %g mm \n orient: %g deg',pen_minor_axe,pen_major_axe,pen_orientation);
+   txt = sprintf('id: %g \n width: %g mm \n length: %g mm \n orient: %g deg',i,pen_minor_axe,pen_major_axe,pen_orientation);
    text(pens_centroids(i,1),pens_centroids(i,2),txt,'Color','green','FontSize',10)
 end
 %--------------------------------------------------------
