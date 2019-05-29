@@ -28,12 +28,6 @@ I= imread('../main.jpg');
 
 
 
-
-
-
-
-
-
 % 
 % 
 % %figure(1)
@@ -93,20 +87,14 @@ I= imread('../main.jpg');
 %figure(1)
 %imshow(I);
 I = imresize(I,0.3);
-I = im2double(I);
+%I = im2double(I);
 
-[B, Mask] = createMask(I);
-%figure(2)
-%imshow(B)
+[B2,Mask1] = createMask_ycbcr(I);
+B = B2;
 % pozbycie sie niechcianych kropek i szumow
-s_closing = strel('disk',4);
+s_closing = strel('disk',2);
 afterClosing = imclose(B,s_closing);
-s_opening = strel('disk',2);
-afterOpening = imopen(afterClosing,s_opening);
-%figure(3)
-%imshow(afterOpening)
-%imwrite(afterOpening,'myGrayMask.png');
-[BW_out,properties] = filterRegions(afterOpening);
+[BW_out,properties] = filterRegions(afterClosing);
 
 circ_x = [];
 circ_y = [];
@@ -122,7 +110,7 @@ pens_minor_axis = [];
 
 % nieefektywne filtrowanie okregow
 for i=1:1:length(properties)
-    if properties(i).Area > 40
+    if properties(i).Area > 40 
         ratio = properties(i).Area/(properties(i).Perimeter)^2;
         if  ratio > 0.1/4*3.14
             minor_axis = [minor_axis; properties(i).MinorAxisLength];
@@ -130,7 +118,7 @@ for i=1:1:length(properties)
             circ_areas = [circ_areas; properties(i).Area]
             circ_x = [circ_x; properties(i).Centroid(1)];
             circ_y = [circ_y; properties(i).Centroid(2)];
-        else
+        elseif properties(i).Area < 3500
             pens_centroids = [pens_centroids; properties(i).Centroid];
             pens_boxes=[pens_boxes; properties(i).BoundingBox];
             pens_minor_axis = [pens_minor_axis; properties(i).MinorAxisLength];
@@ -159,7 +147,7 @@ px2mm = real_max_radius/max_radius;;
 center = [circ_x(id_max_circ) circ_y(id_max_circ)];
 
 figure(1)
-imshow(afterOpening);
+imshow(afterClosing);
 hold on;
 for i=1:1:length(circ_areas)
    scatter(circ_x(i),circ_y(i),'filled');
@@ -188,47 +176,8 @@ end
 %1. wytnij kawalek obrazu
 % imshow(BW_out)
 
-% wyodrebnienie obiektu z obrazu
-<<<<<<< HEAD
-pen = 6
-box = pens_boxes(pen, :);
-im_x = box(1);
-im_y = box(2);
-im_len = box(3);
-im_wid = box(4);
-BW_help = BW_out(im_y:im_y+im_wid, im_x:im_x+im_len);
-% imshow(BW_help)
-% obroc go, zeby byl rownolegle do osi X
-deg = -pens_orientations(pen);
-
-
-figure(2)
-
-image_rot = imrotate(BW_help, deg, 'bicubic')
-
-% image_rot_d = double(image_rot)
-% imshow(image_rot_d)
-
-% wytnij koncowki w zaleznosci od zadanych procentow
-siz = 0.05
-im_proc = siz*size(image_rot, 1)
-image_rot_cut = [image_rot(:, 1:im_proc) image_rot(:, end-im_proc:end)];
-probes = sum(image_rot_cut)
-S = skewness(probes)
-
-
-% pokaż obrocony obraz
-if S > 0
-    txt = sprintf('po prawej');
-else
-    txt = sprintf('po lewej');
-end
-
-image_rot_d = double(image_rot)
-% image_rot_d = imgaussfilt(image_rot_d)
-imshow(image_rot_d)
-text(5,5,txt,'Color','green','FontSize',10)
-% pen = 5
+% % wyodrebnienie obiektu z obrazu
+% pen = 6
 % box = pens_boxes(pen, :);
 % im_x = box(1);
 % im_y = box(2);
@@ -240,22 +189,60 @@ text(5,5,txt,'Color','green','FontSize',10)
 % deg = -pens_orientations(pen);
 % 
 % 
-% 
+% figure(2)
 % 
 % image_rot = imrotate(BW_help, deg, 'bicubic')
 % 
-% image_rot_d = double(image_rot)
-% imshow(image_rot_d)
+% % image_rot_d = double(image_rot)
+% % imshow(image_rot_d)
 % 
 % % wytnij koncowki w zaleznosci od zadanych procentow
-% siz = 0.3
+% siz = 0.05
 % im_proc = siz*size(image_rot, 1)
-% image_rot = [image_rot(:, 1:im_proc) image_rot(:, end-im_proc:end)];
-% probes = sum(image_rot)
+% image_rot_cut = [image_rot(:, 1:im_proc) image_rot(:, end-im_proc:end)];
+% probes = sum(image_rot_cut)
 % S = skewness(probes)
 % 
 % 
 % % pokaż obrocony obraz
+% if S > 0
+%     txt = sprintf('po prawej');
+% else
+%     txt = sprintf('po lewej');
+% end
+% 
 % image_rot_d = double(image_rot)
 % % image_rot_d = imgaussfilt(image_rot_d)
 % imshow(image_rot_d)
+% text(5,5,txt,'Color','green','FontSize',10)
+% % pen = 5
+% % box = pens_boxes(pen, :);
+% % im_x = box(1);
+% % im_y = box(2);
+% % im_len = box(3);
+% % im_wid = box(4);
+% % BW_help = BW_out(im_y:im_y+im_wid, im_x:im_x+im_len);
+% % % imshow(BW_help)
+% % % obroc go, zeby byl rownolegle do osi X
+% % deg = -pens_orientations(pen);
+% % 
+% % 
+% % 
+% % 
+% % image_rot = imrotate(BW_help, deg, 'bicubic')
+% % 
+% % image_rot_d = double(image_rot)
+% % imshow(image_rot_d)
+% % 
+% % % wytnij koncowki w zaleznosci od zadanych procentow
+% % siz = 0.3
+% % im_proc = siz*size(image_rot, 1)
+% % image_rot = [image_rot(:, 1:im_proc) image_rot(:, end-im_proc:end)];
+% % probes = sum(image_rot)
+% % S = skewness(probes)
+% % 
+% % 
+% % % pokaż obrocony obraz
+% % image_rot_d = double(image_rot)
+% % % image_rot_d = imgaussfilt(image_rot_d)
+% % imshow(image_rot_d)
