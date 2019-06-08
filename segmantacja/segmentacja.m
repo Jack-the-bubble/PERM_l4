@@ -1,112 +1,13 @@
 clear all;
 
 I= imread('../main.jpg');
-
-%%wyodrebnienie koloru r
-
-% I = imresize(I,0.5);
-% I = im2double(I);
-% imshow(I);
-% 
-% 
-% [BW_r,maskedRGBImage_r] = createMask_r(I);
-% BW_r_thres = rgb2gray(maskedRGBImage_r);
-% % BW_r_thres = double(imbinarize(maskedRGBImage_r));
-% % BW_r = rgb2grey(maskedRGBImage_r);
-% 
-% [BW_seg_r,maskedImage_r] = segment_r(BW_r_thres);
-% 
-% imshow(maskedImage_r);
-% 
-% [BW_out,properties_r] = filterRegions_r(BW_in)
-% 
-% %wyodrebnienie koloru y
-
-
-
-
-
-
-
-
-
-
-
-
-
-% 
-% 
-% %figure(1)
-% %imshow(I);
-% I = imresize(I,0.5);
-% I = im2double(I);
-% [B, Mask] = createMask(I);
-% %figure(2)
-% %imshow(B)
-% % pozbycie sie niechcianych kropek i szumow
-% s_closing = strel('disk',3);
-% afterClosing = imclose(B,s_closing);
-% s_opening = strel('disk',4);
-% afterOpening = imopen(afterClosing,s_opening);
-% %figure(3)
-% %imshow(afterOpening)
-% %imwrite(afterOpening,'myGrayMask.png');
-% [BW_out,properties] = filterRegions(afterOpening);
-% 
-% circ_x = [];
-% circ_y = [];
-% circ_areas = [];
-% major_axis = [];
-% minor_axis = [];
-% 
-% % nieefektywne filtrowanie okregow
-% for i=1:1:length(properties)
-%     ratio = properties(i).Area/(properties(i).Perimeter)^2;
-%     if  ratio > 0.1/4*3.14
-%         minor_axis = [minor_axis; properties(i).MinorAxisLength]
-%         major_axis = [major_axis; properties(i).MajorAxisLength]
-%         circ_areas = [circ_areas; properties(i).Area]
-%         circ_x = [circ_x; properties(i).Centroid(1)];
-%         circ_y = [circ_y; properties(i).Centroid(2)];
-%     end
-% end
-% 
-% % najwieksze koło
-% [max_circ_area, id_max_circ] = max(circ_areas);
-% % średnica najwiekszego
-% diameter = mean([minor_axis(id_max_circ) major_axis(id_max_circ)],2);
-% % promien najwiekszego
-% real_radius = 78;
-% radius = diameter/2; % to jest rowne 78 mm
-% center = [circ_x(id_max_circ) circ_y(id_max_circ)];
-% 
-% figure(1)
-% imshow(afterOpening);
-% hold on;
-% scatter(circ_x,circ_y,'filled');
-% hold off;
-% hold on
-% viscircles(center,radius);
-% hold off
-% txt = sprintf('radius = %g',real_radius);
-% text(center(1),center(2),txt,'Color','blue','FontSize',12)
-%figure(1)
-%imshow(I);
-I = imresize(I,0.8);
-I = im2double(I);
-
-[B, Mask] = createMask(I);
-%figure(2)
-%imshow(B)
+I = imresize(I,0.3);
+[B2,Mask1] = createMask_ycbcr(I);
+B = B2;
 % pozbycie sie niechcianych kropek i szumow
-s_closing = strel('disk',4);
+s_closing = strel('disk',2);
 afterClosing = imclose(B,s_closing);
-s_opening = strel('disk',2);
-afterOpening = imopen(afterClosing,s_opening);
-%figure(3)
-%imshow(afterOpening)
-%imwrite(afterOpening,'myGrayMask.png');
-[BW_out,properties] = filterRegions(afterOpening);
+[BW_out,properties] = filterRegions(afterClosing);
 
 circ_x = [];
 circ_y = [];
@@ -119,10 +20,12 @@ pens_orientations = [];
 pens_boxes = [];
 pens_major_axis = [];
 pens_minor_axis = [];
+pens_eccentricity = [];
+pens_perimeter = [];
+% filtrowanie okregow
 
-% nieefektywne filtrowanie okregow
 for i=1:1:length(properties)
-    if properties(i).Area > 40
+    if properties(i).Area > 40 
         ratio = properties(i).Area/(properties(i).Perimeter)^2;
         if  ratio > 0.1/4*3.14
             minor_axis = [minor_axis; properties(i).MinorAxisLength];
@@ -130,17 +33,18 @@ for i=1:1:length(properties)
             circ_areas = [circ_areas; properties(i).Area]
             circ_x = [circ_x; properties(i).Centroid(1)];
             circ_y = [circ_y; properties(i).Centroid(2)];
-        else
+        elseif (properties(i).Area < 3500) && (afterClosing(floor(properties(i).Centroid(2)), floor(properties(i).Centroid(1))))
             pens_centroids = [pens_centroids; properties(i).Centroid];
             pens_boxes=[pens_boxes; properties(i).BoundingBox];
             pens_minor_axis = [pens_minor_axis; properties(i).MinorAxisLength];
             pens_major_axis = [pens_major_axis; properties(i).MajorAxisLength];
             pens_orientations = [pens_orientations; properties(i).Orientation];
+            pens_eccentricity = [pens_eccentricity; properties(i).Eccentricity];
         end
     end
 end
 
-%KOŁA----------------------------------------------------
+%CIRCLES----------------------------------------------------
 % najwieksze koło
 [max_circ_area, id_max_circ] = max(circ_areas);
 % średnice
@@ -158,38 +62,10 @@ px2mm = real_max_radius/max_radius;;
 % srodek najwiekszego okregu
 center = [circ_x(id_max_circ) circ_y(id_max_circ)];
 
-figure(1)
-imshow(afterOpening);
-hold on;
-for i=1:1:length(circ_areas)
-   scatter(circ_x(i),circ_y(i),'filled');
-   viscircles([circ_x(i) circ_y(i)],radiuses(i));
-   radius = round(radiuses(i)*px2mm);
-   txt = sprintf('R = %g mm',radius);
-   text(circ_x(i),circ_y(i),txt,'Color','green','FontSize',10)
-end
-hold off;
-hold on;
-%--------------------------------------------------------
-
-
-%DŁUGOPISY-----------------------------------------------
-for i=1:1:length(pens_centroids)
-   scatter(pens_centroids(i,1),pens_centroids(i,2),'filled');
-   pen_minor_axe = round(pens_minor_axis(i)*px2mm);
-   pen_major_axe = round(pens_major_axis(i)*px2mm);
-   pen_orientation = round(pens_orientations(i),2);
-   txt = sprintf('id: %g \n width: %g mm \n length: %g mm \n orient: %g deg',i,pen_minor_axe,pen_major_axe,pen_orientation);
-   text(pens_centroids(i,1),pens_centroids(i,2),txt,'Color','green','FontSize',10)
-end
-%--------------------------------------------------------
-
 %wyodrebnienie pojedynczego konturu----------------------
-%1. wytnij kawalek obrazu
-% imshow(BW_out)
-
-% wyodrebnienie obiektu z obrazu
-for i =1: 17
+% wyodrebnienie obiektu z obrazu i obliczanie orientacji
+for i =1: length(pens_boxes)
+    
     pen = i;
     box = pens_boxes(pen, :);
     im_x = box(1);
@@ -202,38 +78,79 @@ for i =1: 17
     deg = -pens_orientations(pen);
 
 
-
-
-    image_rot = imrotate(BW_help, deg, 'bicubic');
-    figure(2)
-    image_rot_d = double(image_rot);
-    imshow(image_rot_d);
-
-    % wytnij koncowki w zaleznosci od zadanych procentow
-    siz = 0.5;
+%     image_rot = imrotate(BW_help, deg, 'bicubic');
+%     figure(2)
+%     image_rot_d = double(image_rot);
+%     imshow(image_rot_d);
+%     tekst = sprintf("this figure's eccentricity is %d", pens_eccentricity(i));
+    disp(tekst);
     k = size(image_rot);
-    im_proc = siz*size(image_rot, 1);
-    % wytnij elementy, na gorze i u dolu dlugopisu, zeby uniknac fragmentow
-    % innych obiektow
-    image_rot = image_rot((k(1)/2-15):(k(1)/2+15), :);
-    image_rot = [image_rot(:, 1:im_proc) image_rot(:, end-im_proc:end)];
-    probes = sum(image_rot);
-    S = skewness(probes);
 
+% wytnij elementy, na gorze i u dolu dlugopisu, zeby uniknac fragmentow
+% innych obiektow
+
+% wyznacz najgrubsze miejsce obiekty i do takiej wielkosci przytnij
+    pom  = floor(max(sum(image_rot))/2+1)
+    ver_trim = floor(0.2*k(1))
+    image_rot = image_rot((k(1)/2-pom):(k(1)/2+pom), :);
+    
+%     metoda nr 1 - obliczanie skosnosci
+%     probes = sum(image_rot);
+%     S = skewness(probes);
+%     angles = zeros(17, 1);    
+    
+%     sprawdz po ktorej stronie jest wiecej pikseli - metoda nr 2
+    pix_count_l = sum(sum(image_rot(:, 1:k(2)/2)))
+    pix_count_r = sum(sum(image_rot(:, k(2)/2+1:end)))
+    S = pix_count_l-pix_count_r
+    
+    
+
+    point_thresh = 10;
+    
+    if abs(S) > point_thresh
     if S > 0
-        index = i
-        disp('po prawej');
-        
-        txt = sprintf('po prawej');
+        pens_orientations(i) = deg;
+%         tekst = sprintf('ksztalt %d po prawej, kat %d', i, angles(i));
+%         txt = sprintf('po prawej');
     else
-        index = i
-        disp('po lewej');
-        txt = sprintf('po lewej');
+        pens_orientations(i) = 180-deg;
+%         tekst = sprintf('ksztalt %d po lewej, kat %d', i, angles(i));
+%         txt = sprintf('po lewej');
     end
-
-    figure(3)
-% pokaż obrocony obraz
-    image_rot_d = double(image_rot);
-% image_rot_d = imgaussfilt(image_rot_d)
-    imshow(image_rot_d)
+    disp(tekst);
+    else
+        tekst = sprintf("nie wykryto koncowki dla obiektu %d", i);
+        pens_orientations(i) = 0;
+        disp(tekst)
+    end
+    
+%     figure(3)
+%     imshow(image_rot_d)
 end
+
+figure(1)
+imshow(afterClosing);
+hold on;
+for i=1:1:length(circ_areas)
+    disp(floor(circ_x(i)))
+    disp(floor(circ_y(i)))
+   scatter(floor(circ_x(i)),floor(circ_y(i)),'filled');
+   viscircles([floor(circ_x(i)) floor(circ_y(i))],radiuses(i));
+   radius = round(radiuses(i)*px2mm);
+   txt = sprintf('R = %g mm',radius);
+   text(floor(circ_x(i, 1)),floor(circ_y(i, 1)),txt,'Color','blue','FontSize',10)
+end
+hold off;
+hold on;
+%DUGOPISY-----------------------------------------------
+for i=1:1:length(pens_centroids)
+   scatter(pens_centroids(i,1),pens_centroids(i,2),'filled');
+   pen_minor_axe = round(pens_minor_axis(i)*px2mm);
+   pen_major_axe = round(pens_major_axis(i)*px2mm);
+   pen_orientation = round(pens_orientations(i),2);
+   txt = sprintf('id: %g \n width: %g mm \n length: %g mm \n orient: %g deg',i,pen_minor_axe,pen_major_axe,pen_orientation);
+   text(floor(pens_centroids(i,1)),floor(pens_centroids(i,2)),txt,'Color','blue','FontSize',10)
+end
+
+
