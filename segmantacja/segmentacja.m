@@ -92,7 +92,7 @@ I= imread('../main.jpg');
 % text(center(1),center(2),txt,'Color','blue','FontSize',12)
 %figure(1)
 %imshow(I);
-I = imresize(I,0.3);
+I = imresize(I,0.8);
 I = im2double(I);
 
 [B, Mask] = createMask(I);
@@ -189,73 +189,51 @@ end
 % imshow(BW_out)
 
 % wyodrebnienie obiektu z obrazu
-<<<<<<< HEAD
-pen = 6
-box = pens_boxes(pen, :);
-im_x = box(1);
-im_y = box(2);
-im_len = box(3);
-im_wid = box(4);
-BW_help = BW_out(im_y:im_y+im_wid, im_x:im_x+im_len);
-% imshow(BW_help)
-% obroc go, zeby byl rownolegle do osi X
-deg = -pens_orientations(pen);
+for i =1: 17
+    pen = i;
+    box = pens_boxes(pen, :);
+    im_x = box(1);
+    im_y = box(2);
+    im_len = box(3);
+    im_wid = box(4);
+    BW_help = BW_out(im_y:im_y+im_wid, im_x:im_x+im_len);
+    % imshow(BW_help)
+    % obroc go, zeby byl rownolegle do osi X
+    deg = -pens_orientations(pen);
 
 
-figure(2)
-
-image_rot = imrotate(BW_help, deg, 'bicubic')
-
-% image_rot_d = double(image_rot)
-% imshow(image_rot_d)
-
-% wytnij koncowki w zaleznosci od zadanych procentow
-siz = 0.05
-im_proc = siz*size(image_rot, 1)
-image_rot_cut = [image_rot(:, 1:im_proc) image_rot(:, end-im_proc:end)];
-probes = sum(image_rot_cut)
-S = skewness(probes)
 
 
+    image_rot = imrotate(BW_help, deg, 'bicubic');
+    figure(2)
+    image_rot_d = double(image_rot);
+    imshow(image_rot_d);
+
+    % wytnij koncowki w zaleznosci od zadanych procentow
+    siz = 0.5;
+    k = size(image_rot);
+    im_proc = siz*size(image_rot, 1);
+    % wytnij elementy, na gorze i u dolu dlugopisu, zeby uniknac fragmentow
+    % innych obiektow
+    image_rot = image_rot((k(1)/2-15):(k(1)/2+15), :);
+    image_rot = [image_rot(:, 1:im_proc) image_rot(:, end-im_proc:end)];
+    probes = sum(image_rot);
+    S = skewness(probes);
+
+    if S > 0
+        index = i
+        disp('po prawej');
+        
+        txt = sprintf('po prawej');
+    else
+        index = i
+        disp('po lewej');
+        txt = sprintf('po lewej');
+    end
+
+    figure(3)
 % pokaż obrocony obraz
-if S > 0
-    txt = sprintf('po prawej');
-else
-    txt = sprintf('po lewej');
-end
-
-image_rot_d = double(image_rot)
+    image_rot_d = double(image_rot);
 % image_rot_d = imgaussfilt(image_rot_d)
-imshow(image_rot_d)
-text(5,5,txt,'Color','green','FontSize',10)
-% pen = 5
-% box = pens_boxes(pen, :);
-% im_x = box(1);
-% im_y = box(2);
-% im_len = box(3);
-% im_wid = box(4);
-% BW_help = BW_out(im_y:im_y+im_wid, im_x:im_x+im_len);
-% % imshow(BW_help)
-% % obroc go, zeby byl rownolegle do osi X
-% deg = -pens_orientations(pen);
-% 
-% 
-% 
-% 
-% image_rot = imrotate(BW_help, deg, 'bicubic')
-% 
-% image_rot_d = double(image_rot)
-% imshow(image_rot_d)
-% 
-% % wytnij koncowki w zaleznosci od zadanych procentow
-% siz = 0.3
-% im_proc = siz*size(image_rot, 1)
-% image_rot = [image_rot(:, 1:im_proc) image_rot(:, end-im_proc:end)];
-% probes = sum(image_rot)
-% S = skewness(probes)
-% 
-% 
-% % pokaż obrocony obraz
-% image_rot_d = double(image_rot)
-% % image_rot_d = imgaussfilt(image_rot_d)
-% imshow(image_rot_d)
+    imshow(image_rot_d)
+end
