@@ -75,10 +75,9 @@ for i =1: length(pens_boxes)
     im_wid = floor(box(4));
     BW_help = BW_out(im_y:im_y+im_wid, im_x:im_x+im_len);
     % imshow(BW_help)
+    
     % obroc go, zeby byl rownolegle do osi X
     deg = -pens_orientations(pen);
-
-
     image_rot = imrotate(BW_help, deg, 'bicubic');
 %     figure(2)
 %     image_rot_d = double(image_rot);
@@ -111,7 +110,7 @@ for i =1: length(pens_boxes)
     
     if abs(S) > point_thresh
     if S > 0
-        pens_orientations(i) = -deg;
+        pens_orientations(i) = 360-deg;
 %         tekst = sprintf('ksztalt %d po prawej, kat %d', i, angles(i));
 %         txt = sprintf('po prawej');
     else
